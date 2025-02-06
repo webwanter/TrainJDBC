@@ -14,10 +14,10 @@ public class Util {
     private Util() {}
 
     public static Connection getConnection() {
-        con = null;
         try {
             con = DriverManager.getConnection(URL, USER, PASSWORD);
-            if (con != null) {
+            con.setAutoCommit(false);
+            if (con != null && !con.isClosed()) {
                 System.out.println("Connection established");
             }
         } catch (SQLException e) {
