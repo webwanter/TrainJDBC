@@ -7,7 +7,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserDaoJDBCImpl  implements UserDao {
+public class UserDaoJDBCImpl implements UserDao {
 
     private final Connection con;
 
@@ -17,7 +17,7 @@ public class UserDaoJDBCImpl  implements UserDao {
     }
 
     @Override
-    public void createUsersTable()  {
+    public void createUsersTable() {
         String sql = "CREATE TABLE IF NOT EXISTS users  (\n" +
                 "  `id` INT NOT NULL AUTO_INCREMENT,\n" +
                 "  `name` VARCHAR(45) NOT NULL,\n" +
@@ -35,10 +35,10 @@ public class UserDaoJDBCImpl  implements UserDao {
     }
 
     @Override
-    public void dropUsersTable()  {
+    public void dropUsersTable() {
         String sql = "DROP TABLE IF EXISTS users;";
 
-        try (Statement stmt = con.createStatement()){
+        try (Statement stmt = con.createStatement()) {
             stmt.execute(sql);
             System.out.println("Table dropped");
 
@@ -48,11 +48,11 @@ public class UserDaoJDBCImpl  implements UserDao {
     }
 
     @Override
-    public void saveUser(String name, String lastName, byte age)  {
+    public void saveUser(String name, String lastName, byte age) {
         String sql = "INSERT INTO  users (name, lastName, age) VALUES (?,?,?)";
 
-        try (PreparedStatement ps = con.prepareStatement(sql)) {
-
+        try (PreparedStatement ps = con.prepareStatement(sql);) {
+            con.setAutoCommit(false);
             ps.setString(1, name);
             ps.setString(2, lastName);
             ps.setByte(3, age);
@@ -62,23 +62,28 @@ public class UserDaoJDBCImpl  implements UserDao {
             System.out.println("User с именем — " + name + " добавлен в базу данных");
         } catch (SQLException e) {
             try {
-                if (Util.getConnection() != null) {
-                    Util.getConnection().rollback();
-                    System.out.println("Transaction rolled back");
-                }
+                con.rollback();
+                System.out.println("Transaction rolled back");
+
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
             e.printStackTrace();
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     @Override
-    public void removeUserById(long id)  {
+    public void removeUserById(long id) {
         String sql = "DELETE  FROM users WHERE id = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-
+            con.setAutoCommit(false);
             ps.setLong(1, id);
 
             ps.executeUpdate();
@@ -87,19 +92,23 @@ public class UserDaoJDBCImpl  implements UserDao {
 
         } catch (SQLException e) {
             try {
-                if (Util.getConnection() != null) {
-                    Util.getConnection().rollback();
-                    System.out.println("Transaction rolled back");
-                }
+                con.rollback();
+                System.out.println("Transaction rolled back");
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
             e.printStackTrace();
+        } finally {
+            try {
+                con.setAutoCommit(true);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
     @Override
-    public List<User> getAllUsers()  {
+    public List<User> getAllUsers() {
         List<User> users = new ArrayList<User>();
 
         String sql = "SELECT * FROM users";
@@ -123,10 +132,10 @@ public class UserDaoJDBCImpl  implements UserDao {
     }
 
     @Override
-    public void cleanUsersTable()  {
+    public void cleanUsersTable() {
         String sql = "TRUNCATE  TABLE users;";
 
-        try (Statement stmt = con.createStatement()){
+        try (Statement stmt = con.createStatement()) {
             stmt.execute(sql);
             System.out.println("Table cleared");
 

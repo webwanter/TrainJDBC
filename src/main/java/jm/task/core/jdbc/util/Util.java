@@ -16,7 +16,6 @@ public class Util {
     public static Connection getConnection() {
         try {
             con = DriverManager.getConnection(URL, USER, PASSWORD);
-            con.setAutoCommit(false);
             if (con != null && !con.isClosed()) {
                 System.out.println("Connection established");
             }
